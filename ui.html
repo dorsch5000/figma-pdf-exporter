@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  :root {
+    --surface: #ffffff;
+    --surface-dim: #f7f7f8;
+    --surface-container: #f0f0f2;
+    --on-surface: #18181b;
+    --on-surface-secondary: #52525b;
+    --on-surface-tertiary: #71717a;
+    --outline: #d4d4d8;
+    --outline-dim: #e4e4e7;
+    --primary: #18181b;
+    --on-primary: #ffffff;
+    --primary-hover: #27272a;
+    --accent-success: #059669;
+    --accent-success-bg: #f0fdf4;
+    --accent-danger: #ef4444;
+    --accent-warning: #d97706;
+    --space-xs: 4px;
+    --space-sm: 6px;
+    --space-md: 10px;
+    --space-lg: 16px;
+    --space-xl: 20px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --text-xs: 9px;
+    --text-sm: 10px;
+    --text-md: 11px;
+    --text-base: 12px;
+    --text-lg: 13px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: var(--text-base);
+    color: var(--on-surface);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === Header === */
+  .header {
+    padding: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--outline-dim);
+    flex-shrink: 0;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+  }
+  .header-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--outline-dim);
+    border-radius: var(--radius-sm);
+    padding: 4px 6px;
+    cursor: pointer;
+    color: var(--on-surface-secondary);
+    font-size: var(--text-sm);
+  }
+  .btn-icon:hover { background: var(--surface-dim); }
+  .file-name-input {
+    width: 100%;
+    border: 1px solid var(--outline-dim);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    font-size: var(--text-md);
+    color: var(--on-surface);
+    background: var(--surface);
+    outline: none;
+  }
+  .file-name-input:focus { border-color: var(--on-surface-tertiary); }
+
+  /* === Frame list === */
+  .frame-section {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .frame-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    flex-shrink: 0;
+  }
+  .frame-count {
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--on-surface-secondary);
+  }
+  .select-links {
+    display: flex;
+    gap: var(--space-sm);
+  }
+  .select-link {
+    font-size: var(--text-sm);
+    color: var(--on-surface-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .select-link:hover { color: var(--on-surface); }
+  .frame-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--space-lg);
+    padding-bottom: var(--space-md);
+  }
+  .frame-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--outline-dim);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+    cursor: grab;
+    transition: background 0.1s, opacity 0.15s;
+  }
+  .frame-row:hover { background: var(--surface-dim); }
+  .frame-row.dragging { opacity: 0.4; }
+  .frame-row.drag-over { border-color: var(--on-surface); border-style: dashed; }
+  .drag-handle {
+    color: var(--outline);
+    font-size: 14px;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+  }
+  .frame-checkbox {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    accent-color: var(--on-surface);
+  }
+  .frame-thumb {
+    width: 48px;
+    height: 27px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: var(--surface-container);
+    flex-shrink: 0;
+  }
+  .frame-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .frame-name {
+    font-size: var(--text-md);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .frame-dims {
+    font-size: var(--text-xs);
+    color: var(--on-surface-tertiary);
+  }
+  .empty-state {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--on-surface-tertiary);
+    font-size: var(--text-md);
+  }
+
+  /* === Quality controls === */
+  .quality-section {
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--outline-dim);
+    flex-shrink: 0;
+  }
+  .quality-label {
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--on-surface-secondary);
+    margin-bottom: var(--space-sm);
+  }
+  .preset-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--outline-dim);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-md);
+    color: var(--on-surface);
+    background: var(--surface);
+    margin-bottom: var(--space-md);
+    cursor: pointer;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  .slider-label {
+    font-size: var(--text-sm);
+    color: var(--on-surface-secondary);
+    width: 60px;
+    flex-shrink: 0;
+  }
+  .slider-input {
+    flex: 1;
+    accent-color: var(--on-surface);
+  }
+  .slider-value {
+    font-size: var(--text-sm);
+    color: var(--on-surface);
+    font-weight: 600;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .estimated-size {
+    font-size: var(--text-sm);
+    color: var(--on-surface-tertiary);
+    margin-top: var(--space-xs);
+  }
+
+  /* === Footer / Export === */
+  .footer {
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--outline-dim);
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+  .btn-export {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: var(--on-primary);
+    font-size: var(--text-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-export:hover { background: var(--primary-hover); }
+  .btn-export:disabled {
+    opacity: 0.4;
+    cursor: default;
+    background: var(--primary);
+  }
+  .btn-cancel {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--on-surface);
+    font-size: var(--text-base);
+    font-weight: 500;
+    cursor: pointer;
+    display: none;
+  }
+  .btn-cancel:hover { background: var(--surface-dim); }
+  .progress-container {
+    display: none;
+    margin-bottom: var(--space-md);
+  }
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--surface-container);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: var(--space-xs);
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.2s ease;
+  }
+  .progress-text {
+    font-size: var(--text-sm);
+    color: var(--on-surface-secondary);
+  }
+  .status-message {
+    display: none;
+    font-size: var(--text-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-md);
+    text-align: center;
+  }
+  .status-success { background: var(--accent-success-bg); color: var(--accent-success); }
+  .status-error { background: #fef2f2; color: var(--accent-danger); }
+  .status-warning { background: #fffbeb; color: var(--accent-warning); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-row">
+    <span class="header-title">PDF Exporter</span>
+    <button class="btn-icon" onclick="refreshFrames()" title="Refresh frame list">&#x21bb;</button>
+  </div>
+  <input type="text" class="file-name-input" id="fileNameInput" value="export" placeholder="File name">
+</div>
+
+<!-- Frame list -->
+<div class="frame-section">
+  <div class="frame-section-header">
+    <span class="frame-count" id="frameCount">Frames (0)</span>
+    <div class="select-links">
+      <button class="select-link" onclick="selectAll()">All</button>
+      <button class="select-link" onclick="deselectAll()">None</button>
+    </div>
+  </div>
+  <div class="frame-list" id="frameList">
+    <div class="empty-state" id="emptyState">No frames found on this page.</div>
+  </div>
+</div>
+
+<!-- Quality controls -->
+<div class="quality-section">
+  <div class="quality-label">Quality</div>
+  <select class="preset-select" id="presetSelect">
+    <option value="best">Best (Print)</option>
+    <option value="high" selected>High (Presentation)</option>
+    <option value="medium">Medium (Sharing)</option>
+    <option value="low">Low (Draft)</option>
+    <option value="custom">Custom</option>
+  </select>
+  <div class="slider-row">
+    <span class="slider-label">Resolution</span>
+    <input type="range" class="slider-input" id="scaleSlider" min="0.5" max="3" step="0.25" value="2">
+    <span class="slider-value" id="scaleValue">2x</span>
+  </div>
+  <div class="slider-row">
+    <span class="slider-label">Quality</span>
+    <input type="range" class="slider-input" id="qualitySlider" min="0.1" max="1" step="0.05" value="0.85">
+    <span class="slider-value" id="qualityValue">85%</span>
+  </div>
+  <div class="estimated-size" id="estimatedSize"></div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="status-message" id="statusMessage"></div>
+  <div class="progress-container" id="progressContainer">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+  <button class="btn-export" id="exportBtn" onclick="startExport()" disabled>Select frames to export</button>
+  <button class="btn-cancel" id="cancelBtn" onclick="cancelExport()">Cancel</button>
+</div>
+
+
+<canvas id="conversionCanvas" style="display:none"></canvas>
+<!-- BEGIN pdf-lib -->
+<!-- @inject:lib/pdf-lib.min.js -->
+<!-- END pdf-lib -->
+<script>
+
+// ==========================================================================
+// State
+// ==========================================================================
+
+var frames = [];
+var selectedOrder = [];
+var fileName = 'export';
+var isExporting = false;
+var cancelRequested = false;
+
+var PRESETS = {
+  best:   { label: 'Best (Print)',        scale: 2,   jpegQuality: 0.95 },
+  high:   { label: 'High (Presentation)', scale: 2,   jpegQuality: 0.85 },
+  medium: { label: 'Medium (Sharing)',     scale: 1.5, jpegQuality: 0.7  },
+  low:    { label: 'Low (Draft)',          scale: 1,   jpegQuality: 0.5  },
+};
+var currentPreset = 'high';
+var currentScale = 2;
+var currentJpegQuality = 0.85;
+
+
+// PDF export state
+var pdfDoc = null;
+var exportQueue = [];
+var currentExportIndex = 0;
+
+// ==========================================================================
+// Message handler
+// ==========================================================================
+
+window.onmessage = function(event) {
+  var msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'init') {
+    fileName = msg.fileName || 'export';
+    document.getElementById('fileNameInput').value = fileName;
+
+    var hasSelection = msg.selectedIds && msg.selectedIds.length > 0;
+    frames = msg.frames.map(function(f) {
+      return {
+        id: f.id, name: f.name,
+        width: f.width, height: f.height,
+        x: f.x, y: f.y,
+        selected: hasSelection ? msg.selectedIds.indexOf(f.id) !== -1 : true,
+        thumbnailData: null
+      };
+    });
+    selectedOrder = frames.map(function(f) { return f.id; });
+
+    if (msg.savedSettings) {
+      currentPreset = msg.savedSettings.preset || 'high';
+      currentScale = msg.savedSettings.scale || 2;
+      currentJpegQuality = msg.savedSettings.jpegQuality || 0.85;
+    }
+    applyPresetToUI(currentPreset);
+    renderFrameList();
+    updateExportButton();
+    updateEstimatedSize();
+  }
+
+  if (msg.type === 'thumbnail') {
+    var frame = frames.find(function(f) { return f.id === msg.frameId; });
+    if (frame) {
+      frame.thumbnailData = msg.data;
+      var img = document.getElementById('thumb-' + CSS.escape(msg.frameId));
+      if (img) {
+        img.src = 'data:image/png;base64,' + msg.data;
+      }
+    }
+  }
+
+  if (msg.type === 'frame-exported') {
+    handleFrameExported(msg);
+  }
+
+  if (msg.type === 'export-error') {
+    handleExportError(msg);
+  }
+};
+
+// ==========================================================================
+// Frame list rendering
+// ==========================================================================
+
+var draggedFrameId = null;
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderFrameList() {
+  var container = document.getElementById('frameList');
+  var emptyState = document.getElementById('emptyState');
+  container.innerHTML = '';
+
+  if (selectedOrder.length === 0) {
+    container.appendChild(emptyState);
+    emptyState.style.display = '';
+    document.getElementById('frameCount').textContent = 'Frames (0)';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  selectedOrder.forEach(function(frameId) {
+    var frame = frames.find(function(f) { return f.id === frameId; });
+    if (!frame) return;
+
+    var row = document.createElement('div');
+    row.className = 'frame-row';
+    row.draggable = true;
+    row.dataset.frameId = frameId;
+
+    var thumbSrc = frame.thumbnailData ? 'data:image/png;base64,' + frame.thumbnailData : '';
+
+    row.innerHTML =
+      '<div class="drag-handle">\u2807</div>' +
+      '<input type="checkbox" class="frame-checkbox" ' +
+        (frame.selected ? 'checked' : '') + ' data-frame-id="' + escapeHtml(frameId) + '">' +
+      '<img id="thumb-' + CSS.escape(frameId) + '" class="frame-thumb" src="' + thumbSrc + '">' +
+      '<div class="frame-info">' +
+        '<div class="frame-name">' + escapeHtml(frame.name) + '</div>' +
+        '<div class="frame-dims">' + frame.width + ' \u00d7 ' + frame.height + '</div>' +
+      '</div>';
+
+    // Drag events
+    row.addEventListener('dragstart', function(e) {
+      draggedFrameId = frameId;
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', function() {
+      row.classList.remove('dragging');
+      draggedFrameId = null;
+      document.querySelectorAll('.drag-over').forEach(function(el) {
+        el.classList.remove('drag-over');
+      });
+    });
+    row.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', function() {
+      row.classList.remove('drag-over');
+    });
+    row.addEventListener('drop', function(e) {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      if (draggedFrameId && draggedFrameId !== frameId) {
+        var fromIndex = selectedOrder.indexOf(draggedFrameId);
+        var toIndex = selectedOrder.indexOf(frameId);
+        selectedOrder.splice(fromIndex, 1);
+        selectedOrder.splice(toIndex, 0, draggedFrameId);
+        renderFrameList();
+      }
+    });
+
+    // Checkbox toggle
+    row.querySelector('.frame-checkbox').addEventListener('change', function(e) {
+      frame.selected = e.target.checked;
+      updateExportButton();
+      updateEstimatedSize();
+    });
+
+    container.appendChild(row);
+  });
+
+  document.getElementById('frameCount').textContent = 'Frames (' + selectedOrder.length + ')';
+}
+
+function selectAll() {
+  frames.forEach(function(f) { f.selected = true; });
+  renderFrameList();
+  updateExportButton();
+  updateEstimatedSize();
+}
+
+function deselectAll() {
+  frames.forEach(function(f) { f.selected = false; });
+  renderFrameList();
+  updateExportButton();
+  updateEstimatedSize();
+}
+
+function updateExportButton() {
+  var count = frames.filter(function(f) { return f.selected; }).length;
+  var btn = document.getElementById('exportBtn');
+  btn.disabled = count === 0 || isExporting;
+  btn.textContent = count > 0
+    ? 'Export ' + count + ' frame' + (count > 1 ? 's' : '') + ' as PDF'
+    : 'Select frames to export';
+}
+
+// ==========================================================================
+// Quality controls
+// ==========================================================================
+
+function applyPresetToUI(presetKey) {
+  var preset = PRESETS[presetKey];
+  if (preset) {
+    currentScale = preset.scale;
+    currentJpegQuality = preset.jpegQuality;
+    currentPreset = presetKey;
+  } else {
+    currentPreset = 'custom';
+  }
+  document.getElementById('presetSelect').value = currentPreset;
+  document.getElementById('scaleSlider').value = currentScale;
+  document.getElementById('scaleValue').textContent = currentScale + 'x';
+  document.getElementById('qualitySlider').value = currentJpegQuality;
+  document.getElementById('qualityValue').textContent = Math.round(currentJpegQuality * 100) + '%';
+  updateEstimatedSize();
+}
+
+document.getElementById('presetSelect').addEventListener('change', function(e) {
+  if (e.target.value === 'custom') {
+    currentPreset = 'custom';
+  } else {
+    applyPresetToUI(e.target.value);
+  }
+});
+
+document.getElementById('scaleSlider').addEventListener('input', function(e) {
+  currentScale = parseFloat(e.target.value);
+  document.getElementById('scaleValue').textContent = currentScale + 'x';
+  currentPreset = 'custom';
+  document.getElementById('presetSelect').value = 'custom';
+  updateEstimatedSize();
+});
+
+document.getElementById('qualitySlider').addEventListener('input', function(e) {
+  currentJpegQuality = parseFloat(e.target.value);
+  document.getElementById('qualityValue').textContent = Math.round(currentJpegQuality * 100) + '%';
+  currentPreset = 'custom';
+  document.getElementById('presetSelect').value = 'custom';
+  updateEstimatedSize();
+});
+
+function updateEstimatedSize() {
+  var selectedFrames = frames.filter(function(f) { return f.selected; });
+  if (selectedFrames.length === 0) {
+    document.getElementById('estimatedSize').textContent = '';
+    return;
+  }
+  var totalBytes = 0;
+  selectedFrames.forEach(function(f) {
+    var pixels = f.width * f.height * currentScale * currentScale;
+    var q = currentJpegQuality;
+    var x = Math.max(0, q - 0.7);
+    var bytesPerPixel = 0.03 + 0.04 * q + 27 * Math.pow(x, 3.6);
+    totalBytes += pixels * bytesPerPixel;
+  });
+  var sizeMB = totalBytes / (1024 * 1024);
+  var sizeStr = sizeMB < 1
+    ? '~' + Math.round(sizeMB * 1024) + ' KB'
+    : '~' + sizeMB.toFixed(1) + ' MB';
+  document.getElementById('estimatedSize').textContent = 'Estimated size: ' + sizeStr;
+}
+
+// ==========================================================================
+// Export flow
+// ==========================================================================
+
+async function startExport() {
+  if (isExporting) return;
+
+  // Check pdf-lib loaded
+  if (typeof PDFLib === 'undefined') {
+    showStatus('PDF library failed to load. Check internet connection and reopen.', 'error');
+    return;
+  }
+
+  // Gather selected frames in order
+  var selectedFrames = selectedOrder.filter(function(id) {
+    var f = frames.find(function(fr) { return fr.id === id; });
+    return f && f.selected;
+  });
+
+  if (selectedFrames.length === 0) {
+    showStatus('No frames selected', 'error');
+    return;
+  }
+
+  // Save settings
+  var settings = {
+    preset: currentPreset,
+    scale: currentScale,
+    jpegQuality: currentJpegQuality,
+  };
+  parent.postMessage({ pluginMessage: { type: 'save-settings', settings: settings } }, '*');
+
+  // Create PDF
+  pdfDoc = await PDFLib.PDFDocument.create();
+  exportQueue = selectedFrames;
+  currentExportIndex = 0;
+  isExporting = true;
+  cancelRequested = false;
+
+  showProgress(0, selectedFrames.length);
+  requestNextFrame();
+}
+
+function requestNextFrame() {
+  if (cancelRequested || currentExportIndex >= exportQueue.length) {
+    finishExport(cancelRequested);
+    return;
+  }
+
+  var frameId = exportQueue[currentExportIndex];
+  parent.postMessage({
+    pluginMessage: {
+      type: 'export-frame',
+      frameId: frameId,
+      scale: currentScale,
+      index: currentExportIndex,
+      total: exportQueue.length,
+    }
+  }, '*');
+}
+
+async function handleFrameExported(msg) {
+  showProgress(msg.index + 1, msg.total);
+
+  try {
+    var jpegBytes = await convertPngToJpeg(msg.data, currentJpegQuality);
+
+    var jpegImage = await pdfDoc.embedJpg(jpegBytes);
+    var page = pdfDoc.addPage([msg.width, msg.height]);
+    page.drawImage(jpegImage, {
+      x: 0,
+      y: 0,
+      width: msg.width,
+      height: msg.height,
+    });
+  } catch (err) {
+    console.error('Error processing frame:', err);
+  }
+
+  currentExportIndex++;
+
+  // Yield to let GC reclaim memory before next frame
+  await new Promise(function(r) { setTimeout(r, 0); });
+  requestNextFrame();
+}
+
+function convertPngToJpeg(base64Png, quality) {
+  return new Promise(function(resolve, reject) {
+    // Decode base64 to binary Blob — avoids huge data-URL string copies
+    var binary = atob(base64Png);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    var blob = new Blob([bytes], { type: 'image/png' });
+    bytes = null; // free early
+
+    createImageBitmap(blob).then(function(bitmap) {
+      blob = null; // free early
+      var canvas = document.getElementById('conversionCanvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      ctx.drawImage(bitmap, 0, 0);
+      bitmap.close(); // free GPU/CPU memory immediately
+
+      canvas.toBlob(function(jpegBlob) {
+        // Clear canvas to free pixel buffer
+        canvas.width = 1;
+        canvas.height = 1;
+
+        if (!jpegBlob) {
+          reject(new Error('Canvas toBlob failed'));
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function() {
+          resolve(new Uint8Array(reader.result));
+        };
+        reader.onerror = function() { reject(reader.error); };
+        reader.readAsArrayBuffer(jpegBlob);
+      }, 'image/jpeg', quality);
+    }).catch(reject);
+  });
+}
+
+async function finishExport(cancelled) {
+  isExporting = false;
+
+  if (cancelled) {
+    pdfDoc = null;
+    hideProgress();
+    showStatus('Export cancelled', 'warning');
+    updateExportButton();
+    return;
+  }
+
+  // Show "Generating PDF..." state
+  document.getElementById('progressText').textContent = 'Generating PDF...';
+
+  try {
+    var pdfBytes = await pdfDoc.save();
+    pdfDoc = null;
+
+    // Trigger download
+    var blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (document.getElementById('fileNameInput').value.trim() || 'export') + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    var sizeMB = pdfBytes.length / (1024 * 1024);
+    var sizeStr = sizeMB < 1
+      ? Math.round(sizeMB * 1024) + ' KB'
+      : sizeMB.toFixed(1) + ' MB';
+    hideProgress();
+    showStatus('PDF exported (' + sizeStr + ')', 'success');
+  } catch (err) {
+    hideProgress();
+    showStatus('Error generating PDF: ' + err.message, 'error');
+    console.error('PDF generation error:', err);
+  }
+
+  updateExportButton();
+}
+
+function handleExportError(msg) {
+  console.warn('Export error for frame:', msg.message);
+  // Skip and continue
+  currentExportIndex++;
+  requestNextFrame();
+}
+
+function cancelExport() {
+  cancelRequested = true;
+}
+
+// ==========================================================================
+// Progress & status
+// ==========================================================================
+
+function showProgress(current, total) {
+  document.getElementById('progressContainer').style.display = 'block';
+  document.getElementById('exportBtn').style.display = 'none';
+  document.getElementById('cancelBtn').style.display = 'block';
+
+  var pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent =
+    current < total
+      ? 'Exporting frame ' + (current + 1) + ' of ' + total + '...'
+      : 'Generating PDF...';
+}
+
+function hideProgress() {
+  document.getElementById('progressContainer').style.display = 'none';
+  document.getElementById('exportBtn').style.display = 'block';
+  document.getElementById('cancelBtn').style.display = 'none';
+}
+
+function showStatus(message, type) {
+  var el = document.getElementById('statusMessage');
+  el.textContent = message;
+  el.className = 'status-message status-' + type;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
+}
+
+// ==========================================================================
+// Misc
+// ==========================================================================
+
+function refreshFrames() {
+  parent.postMessage({ pluginMessage: { type: 'refresh-frames' } }, '*');
+}
+
+</script>
+</body>
+</html>
