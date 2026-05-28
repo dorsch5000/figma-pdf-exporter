@@ -24,7 +24,7 @@ PDF generation runs entirely client-side inside the plugin — nothing is upload
 - **Native page sizes** — each PDF page matches its source frame's pixel dimensions, preserving aspect ratio.
 - **Cancellable export** — long exports can be aborted mid-run.
 - **Memory-conscious export** — frames are exported, JPEG-compressed, and embedded one at a time; intermediate buffers are released between pages to avoid pressure on large documents.
-- **Offline** — pdf-lib is bundled, no CDN dependency, no network access required at runtime.
+- **Offline** — pdf-lib is bundled inside `ui.html`, no CDN dependency, no network access required at runtime.
 
 ## Installation (Development)
 
@@ -33,16 +33,9 @@ PDF generation runs entirely client-side inside the plugin — nothing is upload
    git clone https://github.com/dorsch5000/figma-pdf-exporter.git
    cd figma-pdf-exporter
    ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Build:
-   ```bash
-   npm run build
-   ```
-   This compiles `code.ts` and inlines `pdf-lib` into `dist/ui.html`.
-4. In the Figma desktop app, open **Plugins → Development → Import plugin from manifest…** and pick `dist/manifest.json`.
+2. In the Figma desktop app, open **Plugins → Development → Import plugin from manifest…** and pick `manifest.json` at the project root.
+
+That's it — `code.js` and `ui.html` are committed, no build step required for normal use.
 
 ## Usage
 
@@ -57,32 +50,35 @@ PDF generation runs entirely client-side inside the plugin — nothing is upload
 
 ```
 .
-├── code.ts          # Plugin sandbox code (Figma API)
-├── code.js          # Compiled output (committed)
-├── ui.html          # Plugin UI (HTML/CSS/JS, with @inject marker)
 ├── manifest.json    # Figma plugin manifest
-├── lib/
-│   └── pdf-lib.min.js   # Bundled PDF library
-├── scripts/
-│   └── build.js     # Compile + inject pdf-lib → dist/
-├── dist/            # Build output (gitignored) — load this in Figma
+├── code.ts          # Plugin sandbox source (Figma API)
+├── code.js          # Compiled JS — committed, what Figma actually loads
+├── ui.html          # Plugin UI (HTML/CSS/JS) with pdf-lib inlined
 ├── tsconfig.json
 └── package.json
 ```
 
-## Scripts
+`ui.html` contains the pdf-lib bundle (~525 KB) inlined as a `<script>` block near the bottom of the file. This keeps the plugin entirely offline and avoids relying on a CDN. When editing the UI, ignore that block — everything plugin-specific is in the surrounding HTML/CSS/JS.
 
-| Script        | What it does                                             |
-| ------------- | -------------------------------------------------------- |
-| `npm run build` | Compile TypeScript and produce a Figma-ready `dist/`   |
-| `npm run watch` | `tsc --watch` for iterative `code.ts` development     |
+## Modifying the plugin
 
-When iterating on `ui.html`, re-run `npm run build` to refresh `dist/ui.html`.
+If you change `code.ts`, recompile:
+
+```bash
+npm install        # once
+npm run build      # tsc → code.js
+# or
+npm run watch      # tsc --watch for iterative development
+```
+
+`ui.html` is edited directly — no build step.
+
+To update pdf-lib to a newer version, download the new `pdf-lib.min.js` from npm/unpkg and replace the contents inside the `<!-- BEGIN pdf-lib -->` … `<!-- END pdf-lib -->` block in `ui.html`.
 
 ## Tech
 
 - **TypeScript** for the plugin sandbox
-- **pdf-lib** (1.17.1, MIT) for client-side PDF assembly, bundled locally
+- **pdf-lib** (1.17.1, MIT) for client-side PDF assembly, bundled inline
 - **Figma Plugin API 1.0**, manifest API `1.0.0`
 
 ## License
